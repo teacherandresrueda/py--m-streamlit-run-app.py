@@ -2,71 +2,96 @@ import streamlit as st
 import random
 from collections import Counter
 
-# TÍTULO
-st.title("🎯 Number AI Lab")
+st.title(🤖 Number AI ELITE)
 
-# AVISO LEGAL
-st.warning("⚠️ This app is for entertainment and statistical purposes only.")
+st.markdown(### 📂 Upload your historical results)
 
-# RANGO DE NÚMEROS
+uploaded_file = st.file_uploader(Upload CSV or TXT, type=[csv, txt])
+
 RANGO = range(1, 57)
 
-# INPUT DEL USUARIO
-historial_input = st.text_area("Enter previous numbers (comma separated):")
+historial = []
 
-def parse_historial(texto):
-    try:
-        nums = list(map(int, texto.split(",")))
-        return [nums]
-    except:
-        return []
+# 📥 CARGA DE ARCHIVO
+if uploaded_file
+    content = uploaded_file.read().decode(utf-8)
+    lineas = content.split(n)
+    
+    for linea in lineas
+        try
+            nums = list(map(int, linea.strip().split(,)))
+            if len(nums) == 6
+                historial.append(nums)
+        except
+            pass
 
-historial = parse_historial(historial_input)
+st.write(fLoaded games {len(historial)})
 
-# GENERAR COMBINACIÓN
-def generar_combinacion():
-    return sorted(random.sample(RANGO, 6))
-
-# EVALUAR BALANCE
-def evaluar_balance(combo):
-    bajos = sum(1 for n in combo if n <= 15)
-    medios = sum(1 for n in combo if 16 <= n <= 30)
-    altos = sum(1 for n in combo if n >= 31)
-    return (bajos == 2 and medios == 2 and altos == 2)
-
-# FRECUENCIA
-def calcular_frecuencia(historial):
+# 📊 ANÁLISIS
+def calcular_frecuencia(historial)
     contador = Counter()
-    for jugada in historial:
+    for jugada in historial
         contador.update(jugada)
     return contador
 
 frecuencia = calcular_frecuencia(historial)
 
-# SCORE
-def score_combo(combo):
-    return sum(frecuencia.get(n, 1) for n in combo)
+# 🔥 HOT & COLD
+hot = frecuencia.most_common(10)
+cold = sorted(frecuencia.items(), key=lambda x x[1])[10]
 
-# BOTÓN
-if st.button("🚀 Generate combinations"):
+st.subheader(🔥 Hot numbers)
+st.write(hot)
 
+st.subheader(❄️ Cold numbers)
+st.write(cold)
+
+# ⚖️ BALANCE
+def evaluar_balance(combo)
+    pares = sum(1 for n in combo if n % 2 == 0)
+    bajos = sum(1 for n in combo if n = 28)
+    return (2 = pares = 4) and (2 = bajos = 4)
+
+# 🧠 SIMILITUD
+def similitud(c1, c2)
+    return len(set(c1) & set(c2))
+
+def evitar_repetidos(combo, historial)
+    for h in historial
+        if similitud(combo, h) = 4
+            return False
+    return True
+
+# 🎯 SCORE INTELIGENTE
+def score_combo(combo)
+    score = 0
+    score += sum(frecuencia.get(n, 1) for n in combo)
+    
+    if evaluar_balance(combo)
+        score += 10
+    
+    # bonus por incluir números calientes
+    score += sum(3 for n, _ in hot if n in combo)
+    
+    return score
+
+# 🚀 GENERACIÓN
+if st.button(🚀 Generate Elite Combinations)
+    
     resultados = []
 
-    for _ in range(5000):
-        combo = generar_combinacion()
-
-        if evaluar_balance(combo):
+    for _ in range(15000)
+        combo = sorted(random.sample(RANGO, 6))
+        
+        if evaluar_balance(combo) and evitar_repetidos(combo, historial)
             resultados.append(combo)
 
-    # Quitar duplicados
     resultados = list(set(tuple(c) for c in resultados))
     resultados = [list(c) for c in resultados]
 
-    # Ordenar por score
     resultados_ordenados = sorted(resultados, key=score_combo, reverse=True)
 
-    # MOSTRAR RESULTADOS
-    st.subheader("🔥 Top combinations:")
+    st.subheader(🏆 Best combinations based on your history)
 
-    for c in resultados_ordenados[:10]:
-        st.write(c, "Score:", score_combo(c))
+    for c in resultados_ordenados[10]
+        st.write(c, Score, score_combo(c))
