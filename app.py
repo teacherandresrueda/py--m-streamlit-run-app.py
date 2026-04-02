@@ -10,6 +10,37 @@ import os
 st.set_page_config(page_title="AI Lottery System PRO", layout="wide")
 st.title("🔥 AI Lottery Trading System PRO")
 
+# =========================
+# 🎨 ESTILO VISUAL PRO
+# =========================
+st.markdown("""
+<style>
+.block-green {
+    background-color: #e8f5e9;
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 6px solid #2ecc71;
+}
+.block-red {
+    background-color: #fdecea;
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 6px solid #e74c3c;
+}
+.block-yellow {
+    background-color: #fff8e1;
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 6px solid #f1c40f;
+}
+.block-blue {
+    background-color: #e3f2fd;
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 6px solid #3498db;
+}
+</style>
+""", unsafe_allow_html=True)
 USER_FILE = "user_history.csv"
 REAL_FILE = "real_results.csv"
 
@@ -251,3 +282,41 @@ if st.button("⚡ Generar automático"):
             st.write(j)
     else:
         st.warning("Carga resultados reales primero")
+# =========================
+# ⚡ MODO HÍBRIDO
+# =========================
+st.subheader("⚡ Hybrid Mode")
+
+old_core = [7,12,22,31,38]
+new_core = [15,19,25,29,33]
+
+def generar_hibrido(freq_real, freq_user):
+    import random
+
+    jugadas = []
+
+    for _ in range(5):
+        parte_vieja = random.sample(old_core, 3)
+        parte_nueva = random.sample(new_core, 2)
+
+        base = parte_vieja + parte_nueva
+
+        candidatos = [n for n in range(1,57) if n not in base]
+
+        def score(n):
+            return freq_real.get(n,0)*2 + freq_user.get(n,0)
+
+        candidatos = sorted(candidatos, key=score, reverse=True)
+
+        sexto = candidatos[0]
+
+        combo = sorted(base + [sexto])
+        jugadas.append(combo)
+
+    return jugadas
+
+if st.button("🔥 Generar híbrido"):
+    jugadas = generar_hibrido(freq_real, freq_user)
+
+    for j in jugadas:
+        st.write(j)
