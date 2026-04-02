@@ -9,6 +9,81 @@ import os
 # =========================
 st.set_page_config(page_title="AI Lottery System PRO", layout="wide")
 st.title("🔥 AI Lottery Trading System PRO")
+# =========================
+# 📊 DASHBOARD PRO
+# =========================
+st.markdown("## 📊 Dashboard PRO")
+
+col1, col2, col3 = st.columns(3)
+
+# =========================
+# 🧠 ESTADO DEL SISTEMA
+# =========================
+def estado_sistema(real_df):
+    if len(real_df) < 6:
+        return "🟢 Inicial"
+
+    ultimos = set(real_df.tail(3).values.flatten())
+    anteriores = set(real_df.tail(6).head(3).values.flatten())
+
+    overlap = len(ultimos & anteriores)
+
+    if overlap <= 3:
+        return "🔴 Cambio"
+    elif overlap <= 6:
+        return "🟡 Transición"
+    else:
+        return "🟢 Estable"
+
+with col1:
+    if not real_df.empty:
+        estado = estado_sistema(real_df)
+        st.metric("Estado", estado)
+    else:
+        st.metric("Estado", "Sin datos")
+
+# =========================
+# 🔥 HOT NUMBERS
+# =========================
+def top_numeros(real_df):
+    nums = []
+    for col in real_df.columns:
+        nums += real_df[col].tolist()
+
+    freq = Counter(nums)
+    top = sorted(freq.items(), key=lambda x: x[1], reverse=True)[:5]
+    return [n for n,_ in top]
+
+with col2:
+    if not real_df.empty:
+        st.metric("Hot Numbers", top_numeros(real_df))
+    else:
+        st.metric("Hot Numbers", "-")
+
+# =========================
+# 🎯 JUGADAS CLAVE
+# =========================
+with col3:
+    if not real_df.empty:
+        try:
+            _, jugadas = generar_auto(real_df, user_df)
+            st.metric("Top Play", jugadas[0])
+        except:
+            st.metric("Top Play", "-")
+    else:
+        st.metric("Top Play", "-")
+st.markdown("### 📊 Tendencia rápida")
+
+if not real_df.empty:
+    nums = []
+    for col in real_df.columns:
+        nums += real_df[col].tail(10).tolist()
+
+    freq = Counter(nums)
+    df = pd.DataFrame(freq.items(), columns=["Number","Freq"])
+    df = df.sort_values(by="Freq", ascending=False)
+
+    st.bar_chart(df.set_index("Number"))
 
 # =========================
 # 🎨 ESTILO VISUAL PRO
@@ -272,7 +347,12 @@ def generar_auto(real_df, user_df):
 
 if st.button("⚡ Generar automático"):
     if not real_df.empty:
-        nucleo, jugadas = generar_auto(real_df, user_df)
+      nucleo, freq = detectar_nucleo(real_df, user_df, k=5)
+
+aprendizaje = aprendizaje_usuario(user_df, real_df)
+
+for n in freq:
+    freq[n] += aprendizaje.get(n,0)
 
         st.subheader("🧠 Núcleo detectado")
         st.write(nucleo)
@@ -409,3 +489,71 @@ if not real_df.empty and not user_df.empty:
             st.write(f"🎟️ {t} → ✅ {m}")
     else:
         st.write("❌ No hubo coincidencias")
+# =========================
+# 🧠 LEARNING IA (basado en aciertos)
+# =========================
+st.subheader("🧠 Learning Mode")
+
+estado_reset = detectar_reset(real_df)
+aprendizaje = aprendizaje_usuario(user_df, real_df)
+
+if estado_reset == "reset":
+    st.error("🔴 Reset total → ignorando aprendizaje")
+    aprendizaje = {n:0 for n in range(1,57)}
+
+elif estado_reset == "reducir":
+    st.warning("🟡 Ajuste → aprendizaje reducido")
+    aprendizaje = {n:v*0.5 for n,v in aprendizaje.items()}
+
+else:
+    st.success("🟢 Aprendizaje activo")
+
+for n in freq:
+    freq[n] += aprendizaje.get(n,0)
+
+    if real_df.empty or user_df.empty:
+        return score
+
+    # comparar cada resultado con tus tickets
+    for _, r in real_df.iterrows():
+        resultado = set(r.tolist())
+
+        for _, u in user_df.iterrows():
+            ticket = set(u.tolist())
+
+            aciertos = ticket & resultado
+
+            for n in ticket:
+                if n in aciertos:
+                    score[n] += 3   # recompensa
+                else:
+                    score[n] -= 1   # castigo leve
+
+    return score
+st.subheader("📊 Learning Ranking")
+
+df_learn = pd.DataFrame(aprendizaje.items(), columns=["Number","Score"])
+df_learn = df_learn.sort_values(by="Score", ascending=False)
+
+st.bar_chart(df_learn.set_index("Number"))
+
+# =========================
+# 🔄 RESET INTELIGENTE
+# =========================
+st.subheader("🔄 Reset Inteligente")
+
+def detectar_reset(real_df):
+    if len(real_df) < 8:
+        return "estable"
+
+    ultimos = set(real_df.tail(3).values.flatten())
+    anteriores = set(real_df.tail(8).head(5).values.flatten())
+
+    overlap = len(ultimos & anteriores)
+
+    if overlap <= 2:
+        return "reset"
+    elif overlap <= 5:
+        return "reducir"
+    else:
+        return "mantener"
