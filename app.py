@@ -320,3 +320,92 @@ if st.button("🔥 Generar híbrido"):
 
     for j in jugadas:
         st.write(j)
+# =========================
+# 🧠 MODO AUTOMÁTICO INTELIGENTE
+# =========================
+st.subheader("🧠 Smart Mode (auto decision)")
+
+def detectar_ciclo_simple(real_df):
+    if len(real_df) < 6:
+        return "estable"
+
+    ultimos = real_df.tail(3).values.flatten()
+    anteriores = real_df.tail(6).head(3).values.flatten()
+
+    comunes = len(set(ultimos) & set(anteriores))
+
+    if comunes <= 3:
+        return "cambio"
+    elif comunes <= 6:
+        return "transicion"
+    else:
+        return "estable"
+
+
+if st.button("🧠 Ejecutar Smart Mode"):
+
+    if real_df.empty:
+        st.warning("Carga resultados primero")
+    else:
+        estado = detectar_ciclo_simple(real_df)
+
+        st.write(f"Estado detectado: {estado}")
+
+        if estado == "cambio":
+            st.error("🔴 Cambio de ciclo → usando HÍBRIDO")
+            jugadas = generar_hibrido(real_df, user_df)[:3]
+
+        elif estado == "transicion":
+            st.warning("🟡 Transición → usando HÍBRIDO")
+            jugadas = generar_hibrido(real_df, user_df)[:3]
+
+        else:
+            st.success("🟢 Estable → usando AUTOMÁTICO")
+            _, jugadas = generar_auto(real_df, user_df)
+            jugadas = jugadas[:3]
+
+        st.subheader("🎯 Jugadas finales")
+        for j in jugadas:
+            st.write(j)
+# =========================
+# 📊 FILTRO TEMPORAL
+# =========================
+st.subheader("📊 Temporal Analysis")
+
+n = st.slider("Ver últimos sorteos", 5, 50, 10)
+
+df_temp = real_df.tail(n)
+
+nums = []
+for col in df_temp.columns:
+    nums += df_temp[col].tolist()
+
+freq_temp = Counter(nums)
+
+df_temp_freq = pd.DataFrame(freq_temp.items(), columns=["Number","Freq"])
+df_temp_freq = df_temp_freq.sort_values(by="Freq", ascending=False)
+
+st.bar_chart(df_temp_freq.set_index("Number"))
+# =========================
+# 🔍 MATCH USER vs RESULT
+# =========================
+st.subheader("🔍 Match Analysis")
+
+if not real_df.empty and not user_df.empty:
+
+    ultimo_resultado = set(real_df.tail(1).values.flatten())
+
+    coincidencias = []
+
+    for _, row in user_df.iterrows():
+        ticket = set(row.tolist())
+        match = ticket & ultimo_resultado
+
+        if match:
+            coincidencias.append((list(ticket), list(match)))
+
+    if coincidencias:
+        for t, m in coincidencias:
+            st.write(f"🎟️ {t} → ✅ {m}")
+    else:
+        st.write("❌ No hubo coincidencias")
