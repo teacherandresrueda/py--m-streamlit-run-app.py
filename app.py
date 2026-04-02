@@ -178,3 +178,76 @@ if st.button("🚀 Generate PRO combinations"):
 
     for c in resultados_ordenados[:10]:
         st.write(f"{c} → Score: {round(score_combo(c),2)}")
+# =========================
+# 🤖 MODO AUTOMÁTICO TOTAL
+# =========================
+st.subheader("🤖 Auto Mode (núcleo + jugadas)")
+
+def detectar_nucleo(real_df, user_df, k=5):
+    # Frecuencias combinadas (real pesa más)
+    freq = {}
+    for n in range(1,57):
+        freq[n] = 0
+
+    for col in real_df.columns:
+        for v in real_df[col].dropna():
+            freq[int(v)] += 2  # peso resultados
+
+    for col in user_df.columns:
+        for v in user_df[col].dropna():
+            freq[int(v)] += 1  # peso usuario
+
+    # Top k números
+    ordenados = sorted(freq.items(), key=lambda x: x[1], reverse=True)
+    nucleo = sorted([n for n,_ in ordenados[:k]])
+    return nucleo, freq
+
+
+def elegir_sextos_auto(nucleo, freq):
+    candidatos = [n for n in range(1,57) if n not in nucleo]
+
+    def score(n):
+        s = freq.get(n,0)
+
+        # penalizar consecutivos con el núcleo
+        for c in nucleo:
+            if abs(n - c) == 1:
+                s -= 3
+
+        # preferencia zona media
+        if 20 <= n <= 45:
+            s += 2
+
+        # evitar muy bajos
+        if n < 5:
+            s -= 2
+
+        return s
+
+    candidatos = sorted(candidatos, key=score, reverse=True)
+    return candidatos[:5]
+
+
+def generar_auto(real_df, user_df):
+    nucleo, freq = detectar_nucleo(real_df, user_df, k=5)
+    sextos = elegir_sextos_auto(nucleo, freq)
+
+    jugadas = []
+    for n in sextos:
+        jugadas.append(sorted(nucleo + [n]))
+
+    return nucleo, jugadas
+
+
+if st.button("⚡ Generar automático"):
+    if not real_df.empty:
+        nucleo, jugadas = generar_auto(real_df, user_df)
+
+        st.subheader("🧠 Núcleo detectado")
+        st.write(nucleo)
+
+        st.subheader("🎯 Jugadas recomendadas")
+        for j in jugadas:
+            st.write(j)
+    else:
+        st.warning("Carga resultados reales primero")
