@@ -1,19 +1,19 @@
 import streamlit as st
 import random
+import pandas as pd
 from collections import Counter
+from sklearn.linear_model import LogisticRegression
 
-st.title("🧠 Number AI GOD MODE")
+st.title("📊 AI Lottery Trading Dashboard")
 
-st.markdown("### Upload your historical winning numbers")
+uploaded_file = st.file_uploader("Upload your historical data", type=["csv","txt"])
 
-uploaded_file = st.file_uploader("Upload CSV or TXT", type=["csv", "txt"])
-
-RANGO = range(1, 57)
+RANGO = range(1,57)
 historial = []
 
-# ========================
-# CARGA DE DATOS
-# ========================
+# =========================
+# CARGAR DATOS
+# =========================
 if uploaded_file:
     content = uploaded_file.read().decode("utf-8")
     for linea in content.split("\n"):
@@ -24,100 +24,86 @@ if uploaded_file:
         except:
             pass
 
-st.write(f"📊 Games loaded: {len(historial)}")
+st.write(f"Games loaded: {len(historial)}")
 
-# ========================
-# ANÁLISIS
-# ========================
+# =========================
+# FRECUENCIA
+# =========================
 frecuencia = Counter()
 for jugada in historial:
     frecuencia.update(jugada)
 
-# HOT / COLD
-hot = frecuencia.most_common(10)
-cold = sorted(frecuencia.items(), key=lambda x: x[1])[:10]
+df_freq = pd.DataFrame(frecuencia.items(), columns=["Number","Frequency"])
+df_freq = df_freq.sort_values(by="Frequency", ascending=False)
 
-st.subheader("🔥 Hot Numbers")
-st.write(hot)
+st.subheader("🔥 Frequency Ranking")
+st.bar_chart(df_freq.set_index("Number"))
 
-st.subheader("❄️ Cold Numbers")
-st.write(cold)
+# =========================
+# MACHINE LEARNING
+# =========================
+def preparar_datos(historial):
+    X = []
+    y = []
 
-# ========================
-# PATRONES
-# ========================
-pares = []
-bajos = []
+    for jugada in historial:
+        vector = [0]*56
+        for n in jugada:
+            vector[n-1] = 1
+        X.append(vector)
 
-for jugada in historial:
-    pares.append(sum(1 for n in jugada if n % 2 == 0))
-    bajos.append(sum(1 for n in jugada if n <= 28))
+    for i in range(len(historial)):
+        y.append(1)
 
-if pares:
-    st.subheader("⚖️ Pattern Analysis")
-    st.write(f"Avg even numbers: {sum(pares)/len(pares):.2f}")
-    st.write(f"Avg low numbers: {sum(bajos)/len(bajos):.2f}")
+    return X,y
 
-# ========================
-# FUNCIONES
-# ========================
+if len(historial) > 5:
+    X,y = preparar_datos(historial)
+    model = LogisticRegression(max_iter=1000)
+    model.fit(X,y)
+
+    probabilidades = model.coef_[0]
+
+    ml_scores = {i+1: abs(probabilidades[i]) for i in range(56)}
+
+    df_ml = pd.DataFrame(ml_scores.items(), columns=["Number","Score"])
+    df_ml = df_ml.sort_values(by="Score", ascending=False)
+
+    st.subheader("🧠 ML Ranking")
+    st.bar_chart(df_ml.set_index("Number"))
+
+# =========================
+# GENERADOR PRO
+# =========================
 def generar_combo():
-    return sorted(random.sample(RANGO, 6))
+    return sorted(random.sample(RANGO,6))
 
-def evaluar_balance(combo):
-    pares = sum(1 for n in combo if n % 2 == 0)
-    bajos = sum(1 for n in combo if n <= 28)
-    return (2 <= pares <= 4) and (2 <= bajos <= 4)
-
-def similitud(c1, c2):
-    return len(set(c1) & set(c2))
-
-def evitar_repetidos(combo):
-    for h in historial:
-        if similitud(combo, h) >= 4:
-            return False
-    return True
-
-# ========================
-# SCORE AVANZADO
-# ========================
 def score_combo(combo):
     score = 0
-
-    # frecuencia
-    score += sum(frecuencia.get(n, 1) for n in combo)
-
-    # balance
-    if evaluar_balance(combo):
-        score += 15
-
-    # bonus números calientes
-    score += sum(5 for n, _ in hot if n in combo)
-
-    # penalizar números fríos
-    score -= sum(3 for n, _ in cold if n in combo)
+    score += sum(frecuencia.get(n,1) for n in combo)
+    
+    if len(historial) > 5:
+        score += sum(ml_scores.get(n,0) for n in combo)
 
     return score
 
-# ========================
-# GENERACIÓN INTELIGENTE
-# ========================
-if st.button("🚀 Generate GOD combinations"):
+# =========================
+# GENERAR
+# =========================
+if st.button("🚀 Generate PRO combinations"):
 
     resultados = []
 
     for _ in range(20000):
         combo = generar_combo()
-
-        if evaluar_balance(combo) and evitar_repetidos(combo):
-            resultados.append(combo)
+        resultados.append(combo)
 
     resultados = list(set(tuple(c) for c in resultados))
     resultados = [list(c) for c in resultados]
 
     resultados_ordenados = sorted(resultados, key=score_combo, reverse=True)
 
-    st.subheader("🏆 Best Strategic Combinations")
+    st.subheader("🏆 Best combinations")
 
     for c in resultados_ordenados[:10]:
         st.write(c, "Score:", score_combo(c))
