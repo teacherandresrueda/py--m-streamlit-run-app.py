@@ -316,7 +316,7 @@ def generar_hibrido(freq_real, freq_user):
     return jugadas
 
 if st.button("🔥 Generar híbrido"):
-    jugadas = generar_hibrido(freq_real, freq_user)
+    jugadas = generar_hibrido(real_df, user_df)
 
     for j in jugadas:
         st.write(j)
