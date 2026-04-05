@@ -104,6 +104,8 @@ def generate_by_cycle(cycle, core, top, cold, near):
         combo.extend(random.sample(top, 2))
         if near:
             combo.append(random.choice(near))
+def generar_numeros():
+    return [5, 12, 23, 34, 41, 49]
 
     return sorted(set(combo))
 

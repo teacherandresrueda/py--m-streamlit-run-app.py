@@ -1,10 +1,8 @@
 import streamlit as st
-from melate_sistema_total import 
+from melate_sistema_total import generar_numeros
 
-st.title(🎯 Melate AI - Sistema Inteligente)
+st.title("Melate AI")
 
-st.write(Generador de números basado en patrones)
-
-if st.button(Generar combinación)
+if st.button("Generar combinación"):
     resultado = generar_numeros()
-    st.success(fTu combinación {resultado})
+    st.write(resultado)
