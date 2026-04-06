@@ -1,106 +1,33 @@
 import random
 import json
 import os
-from collections import Counter
 
 DATA_FILE = "historial_melate.json"
 
-# -------------------------
-# HISTORIAL
-# -------------------------
 def leer_historial():
     if not os.path.exists(DATA_FILE):
         return []
     with open(DATA_FILE, "r") as f:
         return json.load(f)
 
-def guardar_historial(nueva):
-    historial = leer_historial()
-    historial.append(nueva)
-    with open(DATA_FILE, "w") as f:
-        json.dump(historial, f)
-def simulacion_montecarlo(n=10000):
-    resultados = []
-
-    for _ in range(n):
-        jugada = sorted(random.sample(range(1,57), 6))
-        resultados.extend(jugada)
-
-    return analizar_frecuencia([resultados])
-# -------------------------
-# ANÁLISIS
-# -------------------------
-def analizar_frecuencia(historial):
-    flat = [n for jugada in historial for n in jugada]
-    return Counter(flat)
-
-# -------------------------
-# SCORE INTELIGENTE
-# -------------------------
-def score_numero(n, frecuencia, simulacion):
-    freq = frecuencia.get(n, 0)
-    sim = simulacion.get(n, 0)
-
-    score = 0
-
-    # penalizar repetidos
-    score -= freq * 0.4
-
-    # favorecer probabilidad simulada
-    score += sim * 0.05
-
-    # zona media
-    if 15 <= n <= 45:
-        score += 2
-
-    return score
-
-    return score
-simulacion = simulacion_montecarlo(5000)
-
-candidatos.sort(
-    key=lambda x: score_numero(x, frecuencia, simulacion),
-    reverse=True
-)
-# -------------------------
-# VALIDACIONES
-# -------------------------
-def es_valida(comb):
-    # evitar consecutivos largos
-    consecutivos = sum(1 for i in range(len(comb)-1) if comb[i]+1 == comb[i+1])
-    if consecutivos >= 3:
-        return False
-
-    # balance par/impar
-    pares = sum(1 for n in comb if n % 2 == 0)
-    if pares < 2 or pares > 4:
-        return False
-
-    # balance alto/bajo
-    bajos = sum(1 for n in comb if n <= 28)
-    if bajos < 2 or bajos > 4:
-        return False
-
-    return True
-
-# -------------------------
-# GENERADOR PRO
-# -------------------------
 def generar_numeros():
     historial = leer_historial()
 
-    # aplana historial
-    flat = [n for jugada in historial for n in jugada] if historial else []
+    # aplanar historial
+    flat = []
+    for jugada in historial:
+        for n in jugada:
+            flat.append(n)
 
     # frecuencia simple
     frecuencia = {}
     for n in flat:
         frecuencia[n] = frecuencia.get(n, 0) + 1
 
-    # candidatos base
+    # candidatos
     candidatos = list(range(1, 57))
 
-    # ordenar por menor frecuencia (mejor lógica)
+    # ordenar (menos repetidos primero)
     candidatos.sort(key=lambda x: frecuencia.get(x, 0))
 
     # generar combinación
@@ -112,9 +39,3 @@ def generar_numeros():
         json.dump(historial, f)
 
     return combinacion
-
-        if intentos > 100:
-            # fallback
-            seleccion = sorted(random.sample(range(1, 57), 6))
-            guardar_historial(seleccion)
-            return seleccion
