@@ -19,7 +19,14 @@ def guardar_historial(nueva):
     historial.append(nueva)
     with open(DATA_FILE, "w") as f:
         json.dump(historial, f)
+def simulacion_montecarlo(n=10000):
+    resultados = []
 
+    for _ in range(n):
+        jugada = sorted(random.sample(range(1,57), 6))
+        resultados.extend(jugada)
+
+    return analizar_frecuencia([resultados])
 # -------------------------
 # ANÁLISIS
 # -------------------------
