@@ -1,0 +1,23 @@
+SYSTEM NAME: MetaPattern Engine
+VERSION: 1.0
+
+CORE PRINCIPLE:
+This system analyzes patterns but does NOT assume certainty.
+All outputs are probabilistic, not predictive guarantees.
+
+DECISION RULE:
+No decision is executed without validation from the system filters.
+
+INPUT TYPES:
+- Numerical data
+- User intuition (optional)
+- Historical combinations
+
+OUTPUT TYPES:
+- Pattern suggestions
+- Risk levels
+- Decision validation
+
+WARNING:
+This system does not predict lottery results with certainty.
+Use for strategic analysis only.
